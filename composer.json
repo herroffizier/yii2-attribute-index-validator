@@ -1,0 +1,19 @@
+{
+    "name": "herroffizier/yii2-attribute-index-validator",
+    "type": "yii2-extension",
+    "keywords": ["yii", "yii2", "yii 2", "extension", "validator", "index"],
+    "require": {
+        "yiisoft/yii2": "*"
+    },
+    "require-dev": {
+        "yiisoft/yii2-codeception": "*",
+        "codeception/codeception": "2.0.*",
+        "codeception/verify": "*",
+        "codeception/specify": "*",
+        "squizlabs/php_codesniffer": "dev-master",
+        "phing/phing": "*"
+    },
+    "autoload": {
+        "psr-4": {"herroffizier\\yii2aiv\\tests\\": "tests/", "herroffizier\\yii2aiv\\": "src/"}
+    }
+}

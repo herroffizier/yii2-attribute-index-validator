@@ -1,0 +1,38 @@
+Yii2 Attribute Index Validator
+==============================
+This validator solves value collisions for unique model attributes by adding increment index to repeating values. E.g. ```title``` will be converted to ```title-1``` if item with ```title``` already exists.
+Such behavior may be useful for tasks like generating URLs and so on.
+
+Installation
+------------
+
+Install validator with Composer:
+
+```
+composer require --prefer-dist herroffizier/yii2-attribute-index-validator "*"
+```
+
+Usage:
+------
+
+Add validator to your model's rules array before `required` and `unique` validators (if any).
+
+```php
+use herroffizier\yii2aiv\AttributeIndexValidator;
+
+...
+
+public function rules()
+{
+    return [
+        [['attribute'], AttributeIndexValidator::className()],
+        [['attribute'], 'required'],
+        [['attribute'], 'unique'],
+    ];
+}
+```
+
+Validator has a few options to customize its behavor.
+
+```separator``` sets separator between original value and index. Default separator is ```-```.
+```startIndex``` defines start index. Default value is ```1```.
