@@ -1,7 +1,7 @@
 Yii2 Attribute Index Validator
 ==============================
 
-[![Build Status](https://travis-ci.org/herroffizier/yii2-attribute-index-validator.svg?branch=master)](https://travis-ci.org/herroffizier/yii2-attribute-index-validator) [![Build Status](https://scrutinizer-ci.com/g/herroffizier/yii2-attribute-index-validator/badges/build.png?b=master)](https://scrutinizer-ci.com/g/herroffizier/yii2-attribute-index-validator/build-status/master) [![Code Climate](https://codeclimate.com/github/herroffizier/yii2-attribute-index-validator/badges/gpa.svg)](https://codeclimate.com/github/herroffizier/yii2-attribute-index-validator)
+[![Build Status](https://travis-ci.org/herroffizier/yii2-attribute-index-validator.svg?branch=master)](https://travis-ci.org/herroffizier/yii2-attribute-index-validator) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/herroffizier/yii2-attribute-index-validator/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/herroffizier/yii2-attribute-index-validator/?branch=master) [![Code Coverage](https://scrutinizer-ci.com/g/herroffizier/yii2-attribute-index-validator/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/herroffizier/yii2-attribute-index-validator/?branch=master) [![Code Climate](https://codeclimate.com/github/herroffizier/yii2-attribute-index-validator/badges/gpa.svg)](https://codeclimate.com/github/herroffizier/yii2-attribute-index-validator)
 
 This validator solves value collisions for unique model attributes by adding incrementals index to repeating values. E.g. ```title``` will become ```title-1``` if item with ```title``` already exists.
 
