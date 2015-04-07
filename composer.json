@@ -2,6 +2,7 @@
     "name": "herroffizier/yii2-attribute-index-validator",
     "type": "yii2-extension",
     "keywords": ["yii", "yii2", "yii 2", "extension", "validator", "index"],
+    "description": "Yii2 validator that adds incremental index to attribute values to make them unique.",
     "require": {
         "yiisoft/yii2": "*"
     },

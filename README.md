@@ -36,7 +36,7 @@ public function rules()
 }
 ```
 
-Validator has a few options to customize its behavor.
+Validator has a few options to customize its behavior.
 
 * ```separator``` sets separator between original value and index. Default separator is ```-```.
 * ```startIndex``` defines start index. Default value is ```1```.
