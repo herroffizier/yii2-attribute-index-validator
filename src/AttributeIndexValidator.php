@@ -12,6 +12,7 @@ namespace herroffizier\yii2aiv;
 use Closure;
 use yii\validators\Validator;
 use yii\db\ActiveQueryInterface;
+use yii\db\ActiveRecordInterface;
 
 class AttributeIndexValidator extends Validator
 {
@@ -32,7 +33,7 @@ class AttributeIndexValidator extends Validator
     /**
      * Additional filter applied to query used to check uniqueness.
      *
-     * @var string|array|\Closure
+     * @var string|array|Closure
      */
     public $filter = null;
 
@@ -44,6 +45,17 @@ class AttributeIndexValidator extends Validator
     protected $escapedSeparator = null;
 
     /**
+     * Escape string for regexp.
+     *
+     * @param  string $string
+     * @return string
+     */
+    protected function escapeForRegexp($string)
+    {
+        return addcslashes($string, '[]().?-*^$/:<>');
+    }
+
+    /**
      * Get escaped separator for regexps.
      *
      * @return string
@@ -51,7 +63,7 @@ class AttributeIndexValidator extends Validator
     protected function getEscapedSeparator()
     {
         if ($this->escapedSeparator === null) {
-            $this->escapedSeparator = addcslashes($this->separator, '[]().?-*^$/:<>');
+            $this->escapedSeparator = $this->escapeForRegexp($this->separator);
         }
 
         return $this->escapedSeparator;
@@ -76,54 +88,107 @@ class AttributeIndexValidator extends Validator
     }
 
     /**
+     * Get condition to exclude current model by it's primay key.
+     *
+     * If model is new, empty array will be returned.
+     *
+     * @param  ActiveRecordInterface $model
+     * @return array
+     */
+    protected function getExcludeByPkCondition(ActiveRecordInterface $model)
+    {
+        if (array_filter($pk = $model->getPrimaryKey(true))) {
+            $condition = ['not', $pk];
+        } else {
+            $condition = [];
+        }
+
+        return $condition;
+    }
+
+    /**
+     * Whether there are an attribute value collision.
+     *
+     * @param  ActiveRecordInterface $model
+     * @param  string                $attribute
+     * @return boolean
+     */
+    protected function hasCollision(ActiveRecordInterface $model, $attribute)
+    {
+        $query =
+            $model->find()->
+                andWhere($this->getExcludeByPkCondition($model))->
+                andWhere([$attribute => $model->$attribute]);
+        $this->addFilterToQuery($query);
+
+        return $query->exists();
+    }
+
+    /**
+     * Get attribute value common part, e. g. part without index but with separator.
+     *
+     * For example, common part for 'test' and 'test-1' will be 'test-'.
+     *
+     * @param  ActiveRecordInterface $model
+     * @param  string                $attribute
+     * @return string
+     */
+    protected function getCommonPart(ActiveRecordInterface $model, $attribute)
+    {
+        $escapedSeparator = $this->getEscapedSeparator();
+
+        return preg_replace('/'.$escapedSeparator.'\d+$/', '', $model->$attribute).$this->separator;
+    }
+
+    /**
+     * Find max index stored in database.
+     *
+     * If no index found, startIndex - 1 will be returned.
+     *
+     * @param  ActiveRecordInterface $model
+     * @param  string                $attribute
+     * @param  string                $commonPart
+     * @return integer
+     */
+    protected function findMaxIndex(ActiveRecordInterface $model, $attribute, $commonPart)
+    {
+        // Find all possible max values.
+        $db = $model::getDb();
+        $indexExpression = 'SUBSTRING('.$db->quoteColumnName($attribute).', :commonPartOffset)';
+        $query =
+            $model->find()->
+                select(['_index' => $indexExpression])->
+                andWhere($this->getExcludeByPkCondition($model))->
+                andWhere(['like', $attribute, $commonPart])->
+                andHaving(['not in', '_index', [0]])->
+                orderBy(['CAST('.$db->quoteColumnName('_index').' AS UNSIGNED)' => SORT_DESC])->
+                addParams(['commonPartOffset' => mb_strlen($commonPart) + 1])->
+                asArray();
+        $this->addFilterToQuery($query);
+        foreach ($query->each() as $row) {
+            $index = $row['_index'];
+            if (!preg_match('/^\d+$/', $index)) {
+                continue;
+            }
+
+            return $index;
+        }
+
+        return $this->startIndex - 1;
+    }
+
+    /**
      * @inheritdoc
      */
     public function validateAttribute($model, $attribute)
     {
-        $currentValue = $model->$attribute;
-
-        // If model is already stored in db, exclude it in further queries.
-        if (array_filter($pk = $model->getPrimaryKey(true))) {
-            $pkCondition = ['not', $pk];
-        } else {
-            $pkCondition = [];
-        }
-
-        // Check whether we have a collision. If no collision found just return.
-        $collisionQuery =
-            $model->find()->
-                andWhere([$attribute => $currentValue])->
-                andWhere($pkCondition);
-        $this->addFilterToQuery($collisionQuery);
-
-        $hasCollision = $collisionQuery->exists();
-        if (!$hasCollision) {
+        if (!$this->hasCollision($model, $attribute)) {
             return;
         }
 
-        // Find base attribute value by removing trailing separator and index for current value.
-        $escapedSeparator = $this->getEscapedSeparator();
-        $maskValue = preg_replace('/'.$escapedSeparator.'\d+$/', '', $currentValue).$this->separator;
+        $commonPart = $this->getCommonPart($model, $attribute);
+        $maxIndex = $this->findMaxIndex($model, $attribute, $commonPart);
 
-        // Find value with maximum index.
-        $maxValueQuery =
-            $model->find()->
-                select([$attribute])->
-                andWhere(['like', $attribute, $maskValue])->
-                andWhere($pkCondition)->
-                orderBy([$attribute => SORT_DESC]);
-        $this->addFilterToQuery($maxValueQuery);
-
-        $maxValue = $maxValueQuery->scalar();
-
-        // Create new index value.
-        $matches = [];
-        if (preg_match('/'.$escapedSeparator.'(\d+)$/', $maxValue, $matches)) {
-            $index = ((int) $matches[1]) + 1;
-        } else {
-            $index = $this->startIndex;
-        }
-
-        $model->$attribute = $maskValue.$index;
+        $model->$attribute = $commonPart.($maxIndex + 1);
     }
 }

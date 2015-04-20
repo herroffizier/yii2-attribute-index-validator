@@ -96,7 +96,7 @@ class AttributeIndexValidatorTest extends TestCase
         });
     }
 
-    public function testCreateWithCustomStartIndex()
+    public function testCustomStartIndex()
     {
         $this->specify('model is saved', function () {
             $model = new Model();
@@ -113,7 +113,7 @@ class AttributeIndexValidatorTest extends TestCase
         });
     }
 
-    public function testCreateWithCustomSeparator()
+    public function testCustomSeparator()
     {
         $this->specify('model is saved', function () {
             $model = new Model();
@@ -130,7 +130,7 @@ class AttributeIndexValidatorTest extends TestCase
         });
     }
 
-    public function testCreateWithEmptySeparator()
+    public function testEmptySeparator()
     {
         $this->specify('model is saved', function () {
             $model = new Model();
@@ -163,7 +163,87 @@ class AttributeIndexValidatorTest extends TestCase
         });
     }
 
-    public function testCreateWithFilter()
+    public function testOverlaps()
+    {
+        $this->specify('model is saved', function () {
+            $model = new Model();
+            $model->attribute = 'test';
+            $this->assertTrue($model->save());
+        });
+
+        $this->specify('model is saved', function () {
+            $model = new Model();
+            $model->attribute = 'test-test';
+            $this->assertTrue($model->save());
+        });
+
+        $this->specify('model is saved', function () {
+            $model = new Model();
+            $model->attribute = 'test-2-test';
+            $this->assertTrue($model->save());
+        });
+
+        $this->specify('model with collision is not saved', function () {
+            $model = new Model();
+            $model->attribute = 'test';
+            $this->assertFalse($model->save());
+        });
+
+        $this->specify('collision corrected', function () {
+            $model = new Model();
+            $model->scenario = 'validator';
+            $model->attribute = 'test';
+            $this->assertTrue($model->save());
+            $this->assertEquals('test-1', $model->attribute);
+        });
+
+        $this->specify('collision corrected', function () {
+            $model = new Model();
+            $model->scenario = 'validator';
+            $model->attribute = 'test-test';
+            $this->assertTrue($model->save());
+            $this->assertEquals('test-test-1', $model->attribute);
+        });
+
+        $this->specify('collision corrected', function () {
+            $model = new Model();
+            $model->scenario = 'validator';
+            $model->attribute = 'test-2-test';
+            $this->assertTrue($model->save());
+            $this->assertEquals('test-2-test-1', $model->attribute);
+        });
+    }
+
+    public function testGaps()
+    {
+        $this->specify('model is saved', function () {
+            $model = new Model();
+            $model->attribute = 'test';
+            $this->assertTrue($model->save());
+        });
+
+        $this->specify('model is saved', function () {
+            $model = new Model();
+            $model->attribute = 'test-50';
+            $this->assertTrue($model->save());
+        });
+
+        $this->specify('model is saved', function () {
+            $model = new Model();
+            $model->attribute = 'test-1000';
+            $this->assertTrue($model->save());
+        });
+
+        $this->specify('model is saved', function () {
+            $model = new Model();
+            $model->scenario = 'validator';
+            $model->attribute = 'test';
+            $this->assertTrue($model->save());
+            $this->assertEquals('test-1001', $model->attribute);
+        });
+    }
+
+    public function testFilter()
     {
         $this->specify('model is saved', function () {
             $model = new Model2();
