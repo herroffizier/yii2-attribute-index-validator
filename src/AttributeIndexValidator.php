@@ -9,7 +9,9 @@
 
 namespace herroffizier\yii2aiv;
 
+use Closure;
 use yii\validators\Validator;
+use yii\db\ActiveQueryInterface;
 
 class AttributeIndexValidator extends Validator
 {
@@ -26,6 +28,13 @@ class AttributeIndexValidator extends Validator
      * @var integer
      */
     public $startIndex = 1;
+
+    /**
+     * Additional filter applied to query used to check uniqueness.
+     *
+     * @var string|array|\Closure
+     */
+    public $filter = null;
 
     /**
      * Escaped separator.
@@ -49,6 +58,24 @@ class AttributeIndexValidator extends Validator
     }
 
     /**
+     * Add filter to query (if any exists).
+     *
+     * @param ActiveQueryInterface $query
+     */
+    protected function addFilterToQuery(ActiveQueryInterface $query)
+    {
+        if (!$this->filter) {
+            return;
+        }
+
+        if ($this->filter instanceof Closure) {
+            call_user_func_array($this->filter, [$query]);
+        } else {
+            $query->andWhere($this->filter);
+        }
+    }
+
+    /**
      * @inheritdoc
      */
     public function validateAttribute($model, $attribute)
@@ -63,27 +90,31 @@ class AttributeIndexValidator extends Validator
         }
 
         // Check whether we have a collision. If no collision found just return.
-        $hasCollision =
+        $collisionQuery =
             $model->find()->
                 andWhere([$attribute => $currentValue])->
-                andWhere($pkCondition)->
-                exists();
+                andWhere($pkCondition);
+        $this->addFilterToQuery($collisionQuery);
+
+        $hasCollision = $collisionQuery->exists();
         if (!$hasCollision) {
             return;
         }
 
         // Find base attribute value by removing trailing separator and index for current value.
         $escapedSeparator = $this->getEscapedSeparator();
-        $maskValue = preg_replace('/'.$escapedSeparator.'\d+$/', '', $currentValue);
+        $maskValue = preg_replace('/'.$escapedSeparator.'\d+$/', '', $currentValue).$this->separator;
 
         // Find value with maximum index.
-        $maxValue =
+        $maxValueQuery =
             $model->find()->
                 select([$attribute])->
                 andWhere(['like', $attribute, $maskValue])->
                 andWhere($pkCondition)->
-                orderBy([$attribute => SORT_DESC])->
-                scalar();
+                orderBy([$attribute => SORT_DESC]);
+        $this->addFilterToQuery($maxValueQuery);
+
+        $maxValue = $maxValueQuery->scalar();
 
         // Create new index value.
         $matches = [];
@@ -93,6 +124,6 @@ class AttributeIndexValidator extends Validator
             $index = $this->startIndex;
         }
 
-        $model->$attribute = $maskValue.$this->separator.$index;
+        $model->$attribute = $maskValue.$index;
     }
 }

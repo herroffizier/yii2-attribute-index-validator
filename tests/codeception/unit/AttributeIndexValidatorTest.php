@@ -12,6 +12,7 @@ namespace herroffizier\yii2aiv\tests\codeception\unit;
 use Codeception\Specify;
 use yii\codeception\TestCase;
 use herroffizier\yii2aiv\tests\helpers\Model;
+use herroffizier\yii2aiv\tests\helpers\Model2;
 
 class AttributeIndexValidatorTest extends TestCase
 {
@@ -125,7 +126,7 @@ class AttributeIndexValidatorTest extends TestCase
             $model->attribute = 'test';
             $model->scenario = 'validatorWithCustomSeparator';
             $this->assertTrue($model->save());
-            $this->assertEquals('test*1', $model->attribute);
+            $this->assertEquals('test%1', $model->attribute);
         });
     }
 
@@ -159,6 +160,49 @@ class AttributeIndexValidatorTest extends TestCase
             $model->scenario = 'validatorWithEmptySeparator';
             $this->assertTrue($model->save());
             $this->assertEquals('test3', $model->attribute);
+        });
+    }
+
+    public function testCreateWithFilter()
+    {
+        $this->specify('model is saved', function () {
+            $model = new Model2();
+            $model->attribute_1 = 'test';
+            $model->attribute_2 = 'test';
+            $this->assertTrue($model->save());
+        });
+
+        $this->specify('model is not saved twice', function () {
+            $model = new Model2();
+            $model->attribute_1 = 'test';
+            $model->attribute_2 = 'test';
+            $this->assertFalse($model->save());
+        });
+
+        $this->specify('model with different attribute saved', function () {
+            $model = new Model2();
+            $model->attribute_1 = 'test';
+            $model->attribute_2 = 'test1';
+            $this->assertTrue($model->save());
+        });
+
+        $this->specify('collision corrected with closure filter', function () {
+            $model = new Model2();
+            $model->scenario = 'validatorWithFilterClosure';
+            $model->attribute_1 = 'test';
+            $model->attribute_2 = 'test';
+            $this->assertTrue($model->save());
+            $this->assertEquals('test-1', $model->attribute_2);
+        });
+
+        $this->specify('collision corrected with array filter', function () {
+            $model = new Model2();
+            $model->scenario = 'validatorWithFilterArray';
+            $model->attribute_1 = 'test';
+            $model->attribute_2 = 'test';
+            $model->validate();
+            $this->assertTrue($model->save());
+            $this->assertEquals('test-2', $model->attribute_2);
         });
     }
 }

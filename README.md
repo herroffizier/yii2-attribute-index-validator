@@ -40,3 +40,4 @@ Validator has a few options to customize its behavior.
 
 * ```separator``` sets separator between original value and index. Default separator is ```-```.
 * ```startIndex``` defines start index. Default value is ```1```.
+* ```filter``` defines additional filter to be applied to query used to check attribute uniqueness. May be either a string, an array or an anonymous function. In case of string or array ```filter``` value will be passed to ```\yii\web\ActiveQueryInterface::andWhere()``` method. In case of anonymous function its signature must be ```function($query)``` and instance of ```\yii\web\ActiveQueryInterface``` will be passed to it. Default value is ```null```.

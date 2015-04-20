@@ -41,7 +41,7 @@ class Model extends \yii\db\ActiveRecord
             [
                 ['attribute'],
                 AttributeIndexValidator::className(),
-                'separator' => '*',
+                'separator' => '%',
                 'on' => 'validatorWithCustomSeparator'
             ],
             [
