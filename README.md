@@ -13,7 +13,7 @@ Installation
 Install validator with Composer:
 
 ```
-composer require --prefer-dist herroffizier/yii2-attribute-index-validator "*"
+composer require --prefer-dist "herroffizier/yii2-attribute-index-validator:@stable"
 ```
 
 Usage
