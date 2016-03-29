@@ -18,6 +18,12 @@ class AttributeIndexValidatorTest extends TestCase
 {
     use Specify;
 
+    protected function setUp()
+    {
+        parent::setUp();
+        $this->specifyConfig()->deepClone(false);
+    }
+
     public function testCreate()
     {
         $this->specify('model is saved', function () {
